@@ -115,7 +115,3 @@ git checkout shiro-root-1.2.4
 
 ![image-20240206164439682](img/image-20240206164439682.png)
 
-
-
-## 0x04 总结
-
