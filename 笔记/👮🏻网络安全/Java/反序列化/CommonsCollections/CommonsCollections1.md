@@ -16,11 +16,11 @@
 
   https://hg.openjdk.org/jdk8u/jdk8u/jdk/rev/8dd0918b97a4 下载对应版本的zip，在jd8u65文件夹下存在一个src.zip，解压后将src/share/classes/sun文件夹放在src下。
 
-<img src="./img/image-20240327014808365.png" alt="image-20240327014808365" style="zoom:50%;" />
+<img src="./img/image-20240327014808365.png" alt="image-20240327014808365"/>
 
 - 调用Find usages找不到，可以修改配置如下：
 
-<img src="./img/image-20240327014956561.png" alt="image-20240327014956561" style="zoom:35%;" />
+  <img src="./img/image-20240327014956561.png" alt="image-20240327014956561"  />
 
 
 
