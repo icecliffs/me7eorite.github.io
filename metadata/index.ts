@@ -1,7 +1,7 @@
 /** 文本 */
-export const siteName = 'NoleBase'
-export const siteShortName = 'NoleBase'
-export const siteDescription = '记录回忆，知识和畅想的地方'
+export const siteName = 'me7eorite'
+export const siteShortName = 'me7eorite'
+export const siteDescription = '计算机学习笔记'
 
 /** 文档所在目录 */
 export const include = ['笔记', '生活']
