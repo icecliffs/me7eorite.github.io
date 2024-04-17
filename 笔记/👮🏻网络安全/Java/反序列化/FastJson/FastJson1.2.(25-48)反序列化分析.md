@@ -6,17 +6,17 @@
 
 ## 2.漏洞分析
 
-#### (1).环境配置
+### 2.1 环境配置
 
 ```xml
-        <dependency>
-            <groupId>com.alibaba</groupId>
-            <artifactId>fastjson</artifactId>
-            <version>1.2.25</version>
-        </dependency>
+<dependency>
+    <groupId>com.alibaba</groupId>
+    <artifactId>fastjson</artifactId>
+    <version>1.2.25</version>
+</dependency>
 ```
 
-#### (2).限制分析
+### 2.2 限制分析
 
 当依赖版本为1.2.25及以上的时候，由于增加了白名单机制，原来的`Templates`类利用方式被限制了，只能寻找其它方式。在`ParserConfig#checkAutoType()`如下图
 
@@ -35,17 +35,33 @@ ParserConfig.getGlobalInstance().setAutoTypeSupport(true);
 ParserConfig.getGlobalInstance().addAccept("com.sun");
 ```
 
+### 2.3 绕过分析
 
+#### (1) `L 、;`绕过
 
+##### 影响版本
 
+##### 绕过分析
 
+#### (2) 双写`L 、 ;`绕过(开启autoType)
 
+##### 影响版本
 
+##### 绕过分析
 
+#### (3) `[`绕过(开启autoType)
 
+##### 影响版本
 
+##### 绕过分析
 
+#### (4)内置JSON
 
+##### 影响版本
 
+##### 绕过分析
 
+### 2.4 mappings缓存
+
+#### (1) 漏洞分析
 
