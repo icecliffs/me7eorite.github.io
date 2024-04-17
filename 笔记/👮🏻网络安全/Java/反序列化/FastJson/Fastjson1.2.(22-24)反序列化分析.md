@@ -16,7 +16,7 @@ Fastjson通过parse、parseObject处理以json结构传入的类的字符串形�
 
 所以说，只解析的json字符串中存在`_outputProperties`的键值对，那么在解析的过程中会调用到`TemplatesImpl#getOutputProperties()`，代码如下：
 
-<img src="./img/image-20240416150617547.png" alt="image-20240416150617547" style="zoom:89%;text-align=center;" />
+<img src="./img/image-20240416150617547.png" alt="image-20240416150617547" style="width:925px;height:385px;text-align: center;" />
 
 然后再接着调用`newTransformer()`后就是字节码的加载，这部分内容可以参考CC3,了解这一点之后，可能会想立马构造exp，但是能成功吗？如果进行的构造如下：
 
@@ -37,17 +37,17 @@ Fastjson通过parse、parseObject处理以json结构传入的类的字符串形�
 
 在FastJson解析过程中，关键代码位于`DefaultJSONParser#parseObject()`中，其中关键位置如下：
 
-<img src="./img/image-20240416151603853.png" alt="image-20240416151603853" style="zoom:50%;text-align=center;" />
+<img src="./img/image-20240416151603853.png" alt="image-20240416151603853" style="width:925px;text-align: center;" />
 
 在该位置，通过传入的`@type`获取到需要转化的类，对于后续版本中，该类还会涉及到黑名单的绕过。
 
 往下就涉及到field的处理，主要的处理方式是在于`ObjectArrayCodec#deserialze(...)`中
 
-<img src="./img/image-20240416155420886.png" alt="image-20240416155420886" style="zoom:59%;text-align=center;" />
+<img src="./img/image-20240416155420886.png" alt="image-20240416155420886" style="width:925px;text-align=center;" />
 
 传入后会先判断token的类型，然后采取指定的操作方式，例如：传入的是`_bytecodes`后会进行base64解码：
 
-<img src="./img/image-20240416155239841.png" alt="image-20240416155239841" style="zoom:87%;" />
+<img src="./img/image-20240416155239841.png" alt="image-20240416155239841" style="width:925px;text-align=center;" />
 
 根据以上的分析，这个构造方式就很清晰的：
 
@@ -74,7 +74,7 @@ Fastjson通过parse、parseObject处理以json结构传入的类的字符串形�
 
 因为,增加配置`Feature.SupportNonPublicField`到私有属性会通过反射赋值，其代码位于`FieldDeserializer#setValue(...)`。部分代码如下：
 
-<img src="./img/image-20240416220724322.png" alt="image-20240416220724322" style="text-align=center;" />
+<img src="./img/image-20240416220724322.png" alt="image-20240416220724322" style="width:925px;text-align=center;" />
 
 ## 2.2 JdbcRowSetImpl
 
@@ -87,11 +87,11 @@ JSONObject.parse(payload);
 
 根据之前的分析，FastJson反序列化的时候会调用setter，在该exp中，通过`setAutoCommit(...)`调用到`this.connect()`
 
-<img src="./img/image-20240416231849467.png" alt="image-20240416231849467" style="text-align=center;" />
+<img src="./img/image-20240416231849467.png" alt="image-20240416231849467" style="width:600px;text-align: center;" />
 
 在`this.connect()`中，存在var1.lookup(...)，判断如果参数可控，这个位置是可以触发JNDI注入的。
 
-<img src="./img/image-20240416231932496.png" alt="image-20240416231932496" style="text-align=center;" />
+<img src="./img/image-20240416231932496.png" alt="image-20240416231932496" style="text-align: center;" />
 
 配置一个dataSourceName，需要注意的是在exp中这键值对的顺序是不能够随意变化的，FastJson反序列化的时候会按照顺序调用setter。
 
