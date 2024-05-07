@@ -33,7 +33,7 @@ git checkout shiro-root-1.2.4
 
 第一种方式就在于我们可以根据报错来进行分析，首先如果对与rememberMe该字段传输的内容中，如果存在一些异常的错误，会存在以下异常
 
-![image-20240205194735982](img/image-20240205194735982.png)
+<img src="./img/image-20240205194735982.png" alt="image-20240205194735982" style="width:800px;height:280px" />
 
 那么根据这个报错链，我们需要定位到的就在于`createSubject(SubjectContext subjectContext)`,然后往下跟踪基本上就可以找到该反序列化链的触发。
 
@@ -41,55 +41,55 @@ git checkout shiro-root-1.2.4
 
 首先断点可以设置在`shiro/core/src/main/java/org/apache/shiro/subject/support/DelegatingSubject#login(AuthenticationToken token)`
 
-![image-20240205202219424](img/image-20240205202219424.png)
+<img src="./img/image-20240205202219424.png" alt="image-20240205202219424" style="width:800px;height:100px" />
 
 继续往下跟着调用，到`shiro/core/src/main/java/org/apache/shiro/mgt/DefaultSecurityManager#login(Subject subject, AuthenticationToken token)`
 
-![image-20240205203157528](img/image-20240205203157528.png)
+<img src="./img/image-20240205203157528.png" alt="image-20240205203157528" style="width:800px;height:300px" />
 
 往下调用到`onSuccessfulLogin(token, info, loggedIn);`,继续跟着调用就是到同一个类下的`onSuccessfulLogin(AuthenticationToken token, AuthenticationInfo info, Subject subject)`中，紧接着调用`rememberMeSuccessfulLogin(token, info, subject);`中。
 
-![image-20240205203341408](img/image-20240205203341408.png)
+<img src="./img/image-20240205203341408.png" alt="image-20240205203341408" style="width:800px;height:300px" />
 
 根据上述代码，首先获取`CookieRememberMeManager`对象，当该类不为空，往下调用`onSuccessfulLogin(subject, token, info);`，该方法主要的代码为
 
-![image-20240205203638823](img/image-20240205203638823.png)
+<img src="./img/image-20240205203638823.png" alt="image-20240205203638823" style="width:800px;height:300px" />
 
 通过forgetIndentity方法，对subject对象进行处理，该对象包含单个用户的状态和安全操作，其中包括认证、授权等等。那么我们有必要跟进这个方法分析处理方式。
 
 获取请求包和响应包后，再次调用forgetIndentity方法，处理这两个获取到的包。
 
-![image-20240205204001184](img/image-20240205204001184.png)
+<img src="./img/image-20240205204001184.png" alt="image-20240205204001184" style="width:800px;height:60px" />
 
 通过getCookie方法获取到cookie之后再通过removeFrom方法，在返回包中添加Set-Cookie: rememberMe=deleteMe
 
-![image-20240205204113469](img/image-20240205204113469.png)
+<img src="./img/image-20240205204113469.png" alt="image-20240205204113469" style="width:800px;height:210px" />
 
 然后回到onSuccessfulLogin方法中，如果有设置rememberMe则进入rememberIdentity方法。
 
-![image-20240205205023452](img/image-20240205205023452.png)
+<img src="./img/image-20240205205023452.png" alt="image-20240205205023452" style="width:800px;height:80px" />
 
 通过调用`convertPrincipalsToBytes`对用户名进行处理，然后调用serialize对用户名进行处理。
 
-![image-20240205205132280](img/image-20240205205132280.png)
+<img src="./img/image-20240205205132280.png" alt="image-20240205205132280" style="width:800px;height:110px" />
 
 然后在serialize方法中，对于用户名再进行处理。
 
-![image-20240205205243607](img/image-20240205205243607.png)
+<img src="./img/image-20240205205243607.png" alt="image-20240205205243607" style="width:800px;height:300px" />
 
 
 
 回到`convertPrincipalsToBytes`方法中，再对序列化的数据进行加密。跟进`encrypt(byte[] serialized)`中，通过加密算法为AES，模式为CBC，填充算法为PKCS5Padding
 
-![image-20240205205515277](img/image-20240205205515277.png)
+<img src="./img/image-20240205205515277.png" alt="image-20240205205515277" style="width:800px;height:210px" />
 
 通过` getEncryptionCipherKey()`获取加密密钥，该密钥可以在`AbstractRememberMeManager.java`文件中看到。
 
-![image-20240205205743290](img/image-20240205205743290.png)
+<img src="./img/image-20240205205743290.png" alt="image-20240205205743290" style="width:800px;height:60px" />
 
 返回到rememberIdentity方法中，跟进rememberSerializedIdentity方法中，然后将加密后的内容进行base64加密然后设置到cookie中。
 
-![image-20240205210009980](img/image-20240205210009980.png)
+<img src="./img/image-20240205210009980.png" alt="image-20240205210009980" style="width:800px;height:310px" />
 
 然后就结束了。
 
@@ -97,21 +97,21 @@ git checkout shiro-root-1.2.4
 
 断点可以设置在`shiro/core/src/main/java/org/apache/shiro/mgt/AbstractRememberMeManager#getRememberedPrincipals(SubjectContext subjectContext)`中
 
-![image-20240206164059084](img/image-20240206164059084.png)
+<img src="./img/image-20240206164059084.png" alt="image-20240206164059084" style="width:800px;height:210px" />
 
 首先通过`getRememberedSerializedIdentity`方法获取解码之后的值
 
-![image-20240206164218957](img/image-20240206164218957.png)
+<img src="./img/image-20240206164218957.png" alt="image-20240206164218957" style="width:800px;height:210px" />
 
 获取密钥并且判断是否为空，如果不为空调用解密函数，对加密后的内容进行处理。
 
-![image-20240206164333000](img/image-20240206164333000.png)
+<img src="./img/image-20240206164333000.png" alt="image-20240206164333000" style="width:800px;height:90px" />
 
 然后调用反序列化，需要注意的是这里的反序列化是有一些区别的，重写了ObjectInputStream
 
-![image-20240206164535759](img/image-20240206164535759.png)
+<img src="./img/image-20240206164535759.png" alt="image-20240206164535759" style="width:800px;height:210px" />
 
-调用readObject也会进入resolveClass方法。
+调用 readObject 也会进入 resolveClass 方法。
 
-![image-20240206164439682](img/image-20240206164439682.png)
+<img src="./img/image-20240206164439682.png" alt="image-20240206164439682" style="width:800px;height:120px" />
 

